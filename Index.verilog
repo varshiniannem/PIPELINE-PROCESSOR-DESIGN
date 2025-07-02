@@ -1,0 +1,94 @@
+`timescale 1ns / 1ps
+
+module pipelined_processor (
+    input clk,
+    input reset
+);
+
+    // Opcode Definitions
+    parameter ADD  = 4'b0001;
+    parameter SUB  = 4'b0010;
+    parameter LOAD = 4'b0011;
+
+    // Instruction Memory (8 instructions)
+    reg [15:0] instr_mem [0:7];
+
+    // Data Memory (for LOAD)
+    reg [7:0] data_mem [0:15];
+
+    // Register File (8 registers)
+    reg [7:0] regfile [0:7];
+
+    // Program Counter
+    reg [2:0] pc;
+
+    // IF/ID Pipeline Register
+    reg [15:0] IF_ID_instr;
+
+    // ID/EX Pipeline Register
+    reg [3:0] EX_opcode;
+    reg [2:0] EX_rd, EX_rs1, EX_rs2;
+    reg [7:0] EX_val1, EX_val2;
+
+    // EX/WB Pipeline Register
+    reg [3:0] WB_opcode;
+    reg [2:0] WB_rd;
+    reg [7:0] WB_result;
+
+    // Instruction Fetch (IF)
+    always @(posedge clk or posedge reset) begin
+        if (reset)
+            pc <= 0;
+        else
+            IF_ID_instr <= instr_mem[pc];
+    end
+
+    // Instruction Decode (ID)
+    always @(posedge clk) begin
+        EX_opcode <= IF_ID_instr[15:12];
+        EX_rd     <= IF_ID_instr[11:9];
+        EX_rs1    <= IF_ID_instr[8:6];
+        EX_rs2    <= IF_ID_instr[5:3];
+        EX_val1   <= regfile[IF_ID_instr[8:6]];
+        EX_val2   <= regfile[IF_ID_instr[5:3]];
+        pc        <= pc + 1;
+    end
+
+    // Execute (EX)
+    always @(posedge clk) begin
+        WB_opcode <= EX_opcode;
+        WB_rd     <= EX_rd;
+        case (EX_opcode)
+            ADD: WB_result <= EX_val1 + EX_val2;
+            SUB: WB_result <= EX_val1 - EX_val2;
+            LOAD: WB_result <= data_mem[EX_val1]; // EX_val1 as address
+            default: WB_result <= 8'b00000000;
+        endcase
+    end
+
+    // Write Back (WB)
+    always @(posedge clk) begin
+        if (WB_opcode == ADD || WB_opcode == SUB || WB_opcode == LOAD)
+            regfile[WB_rd] <= WB_result;
+    end
+
+    // Initialize memories
+    initial begin
+        // Clear all registers
+        integer i;
+        for (i = 0; i < 8; i = i + 1)
+            regfile[i] = 0;
+
+        // Preload data memory
+        data_mem[3] = 8'd45;
+
+        // Preload instruction memory:
+        // ADD R1 = R2 + R3
+        // SUB R4 = R1 - R2
+        // LOAD R5 = MEM[R6]
+        instr_mem[0] = {ADD, 3'b001, 3'b010, 3'b011}; // R1 = R2 + R3
+        instr_mem[1] = {SUB, 3'b100, 3'b001, 3'b010}; // R4 = R1 - R2
+        instr_mem[2] = {LOAD, 3'b101, 3'b110, 3'b000}; // R5 = MEM[R6]
+    end
+
+endmodule
