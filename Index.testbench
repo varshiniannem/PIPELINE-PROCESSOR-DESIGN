@@ -1,0 +1,25 @@
+module testbench;
+    reg clk = 0, reset = 0;
+
+    pipelined_processor uut (
+        .clk(clk),
+        .reset(reset)
+    );
+
+    initial begin
+        $dumpfile("pipelined_processor.vcd");
+        $dumpvars(0, testbench);
+
+        // Initial reset
+        reset = 1; #5;
+        reset = 0;
+
+        // Run for some cycles
+        repeat (10) begin
+            clk = ~clk; #5;
+            clk = ~clk; #5;
+        end
+
+        $finish;
+    end
+endmodule
