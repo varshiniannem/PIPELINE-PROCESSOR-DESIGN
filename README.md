@@ -48,3 +48,5 @@ Pipeline processor design is a technique used to improve the performance of comp
 - *Linear Pipeline Processors*: These processors have a linear pipeline structure, where each stage performs a specific operation.
 - *Nonlinear Pipeline Processors*: These processors have a nonlinear pipeline structure, where the pipeline stages are not strictly linear.
 - *Superscalar Pipeline Processors*: These processors can execute multiple instructions in parallel, improving overall system performance ¹ ².
+#output
+![Image](https://github.com/user-attachments/assets/883c70bb-3ce2-41cf-84b4-88a64758cbc5)
